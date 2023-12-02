@@ -47,17 +47,18 @@ fn day1_part2(input: impl Iterator<Item = String>) -> u64 {
             let (_, _, left_digit) = DIGIT_NAMES_CHARS_AND_VALUES
                 .iter()
                 .min_by_key(|(name, char, _)| {
-                    line.find(name)
-                        .unwrap_or(usize::MAX)
-                        .min(line.find(*char).unwrap_or(usize::MAX))
+                    let name_index = line.find(name).unwrap_or(usize::MAX);
+                    let char_index = line.find(*char).unwrap_or(usize::MAX);
+                    name_index.min(char_index)
                 })
                 .unwrap();
             let (_, _, right_digit) = DIGIT_NAMES_CHARS_AND_VALUES
                 .iter()
                 .max_by_key(|(name, char, _)| {
-                    let i32_score =
-                        |o: Option<usize>| o.map(|i: usize| i as i32).unwrap_or(i32::MIN);
-                    i32_score(line.rfind(name)).max(i32_score(line.rfind(*char)))
+                    let as_i32 = |u: usize| u as i32;
+                    let name_index = line.rfind(name).map(as_i32).unwrap_or(i32::MIN);
+                    let char_index = line.rfind(*char).map(as_i32).unwrap_or(i32::MIN);
+                    name_index.max(char_index)
                 })
                 .unwrap();
             10 * left_digit + right_digit
