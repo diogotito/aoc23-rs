@@ -31,3 +31,29 @@ fn puzzle_input_lines(p: impl AsRef<Path>) -> io::Result<impl Iterator<Item = St
         .lines()
         .map_while(|line| line.ok()))
 }
+
+#[cfg(test)]
+mod tests {
+    use std::io::Lines;
+    use std::iter::MapWhile;
+    use super::*;
+    use rstest::*;
+
+    type InputLinesIterator = MapWhile<Lines<BufReader<File>>, fn(io::Result<String>) -> Option<String>>;
+
+    fn input_lines_for_test(input_file_path: &Path) -> InputLinesIterator {
+        BufReader::new(File::open(input_file_path).unwrap())
+            .lines()
+            .map_while(|line| line.ok())
+    }
+
+    #[rstest]
+    #[case(day1_part1, "input/day1.txt", 55108)]
+    fn check_answers(
+        #[case] part_function: fn(InputLinesIterator) -> u64,
+        #[case] puzzle_input: impl AsRef<Path>,
+        #[case] correct_answer: u64
+    ) {
+        assert_eq!(part_function(input_lines_for_test(puzzle_input.as_ref())), correct_answer);
+    }
+}
