@@ -1,13 +1,11 @@
 import re
 from collections import namedtuple
 from dataclasses import dataclass
-from itertools import chain, tee
-from pprint import pprint
+from itertools import tee
 
 
-# Data structures
+Neighbour = namedtuple('Neighbour', ['pos', 'char'])
 
-Neighbour = namedtuple('Neighbour', ['r', 'c', 'char'])
 
 @dataclass
 class Gear:
@@ -26,14 +24,12 @@ padded = ['.' * (len(schematic[0]) + 2),
           *('.' + line + '.' for line in schematic),
           '.' * (len(schematic[0]) + 2)]
 
-
-# Part 1 and 2
-
-def neighbours(s, r, c):
-    return (Neighbour(nr, nc, s[nr][nc]) for nr, nc in
-            ((r - 1, c - 1),  (r - 1, c),  (r - 1, c + 1), 
-             (r    , c - 1),               (r    , c + 1), 
-             (r + 1, c - 1),  (r + 1, c),  (r + 1, c + 1)))
+def neighbouring_positions(row, col_start, col_end):
+    yield from ((row - 1, c) for c in range(col_start - 1, col_end + 1))
+    yield (row, col_start - 1)
+    yield (row, col_end)
+    yield from ((row + 1, c) for c in range(col_start - 1, col_end + 1))
+    
 
 parts_sum = 0
 gears = {}
@@ -41,19 +37,18 @@ gears = {}
 for r, line in enumerate(schematic):
     for match in re.finditer(r'\d+', line):
         part_number = int(match.group())
-        all_neighbours = chain.from_iterable(neighbours(padded, r + 1, col + 1)
-                                             for col in range(*match.span()))
-        ns1, ns2 = tee(all_neighbours)
+        ns1, ns2 = tee(Neighbour(pos=(r + 1, c + 1), char=padded[r + 1][c + 1])
+                       for r, c in neighbouring_positions(r, *match.span()))
 
         if any(n.char not in '0123456789.' for n in ns1):
             parts_sum += part_number
 
         for n in ns2:
             if n.char == '*':
-                if (n.r, n.c) not in gears:
-                    gears[n.r, n.c] = Gear(n.r, n.c, [part_number])
+                if n.pos not in gears:
+                    gears[n.pos] = Gear(*n.pos, [part_number])
                 else:
-                    gears[n.r, n.c].parts.append(part_number)
+                    gears[n.pos].parts.append(part_number)
 
 
 gear_ratios = sum(gear.ratio() for gear in gears.values())
@@ -61,4 +56,5 @@ gear_ratios = sum(gear.ratio() for gear in gears.values())
 print("Part 1:", parts_sum)
 print("Part 2:", gear_ratios)
 
-# 39591044: too low
+# Part 1 = 532428
+# Part 2 = 84051670
